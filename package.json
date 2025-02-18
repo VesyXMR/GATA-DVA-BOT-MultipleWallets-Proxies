@@ -1,0 +1,20 @@
+{
+    "name": "gata-auto-bot",
+    "version": "1.0.0",
+    "description": "Web automation project with Playwright",
+    "main": "index.js",
+    "scripts": {
+        "test": "playwright test",
+        "test:headed": "playwright test --headed",
+        "test:debug": "playwright test --debug"
+    },
+    "dependencies": {
+        "@playwright/test": "^1.42.1",
+        "dotenv": "^16.4.5",
+        "readline-sync": "^1.4.10"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.24",
+        "typescript": "^5.3.3"
+    }
+}
