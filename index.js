@@ -128,7 +128,7 @@ async function runBot(account, proxy) {
     console.log(`[🚀] Iniciando bot para ${account.address} usando proxy: ${proxy || 'Nenhum'}`);
 
     const browser = await chromium.launch({
-        headless: false,
+        headless: true,
         args: proxy ? [`--proxy-server=${proxy}`, '--no-sandbox', '--disable-setuid-sandbox'] : ['--no-sandbox']
     });
 

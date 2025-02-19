@@ -19,19 +19,5 @@
         "llm_token": "",
         "task_token": "",
         "invite_code": ""
-    },
-    {
-        "address": "",
-        "bearer": "",
-        "llm_token": "",
-        "task_token": "",
-        "invite_code": ""
-    },
-    {
-        "address": "",
-        "bearer": "",
-        "llm_token": "",
-        "task_token": "",
-        "invite_code": ""
-    },
+    }
   ]
