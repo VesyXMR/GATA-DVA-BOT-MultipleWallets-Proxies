@@ -23,17 +23,15 @@ The Gata Auto Bot is an automated script designed to interact with the Gata.xyz 
 ## Setup and Execution
 ### Setup
 
-1. Clone this repository or download the necessary files to your local machine:
-
-  git clone https://github.com/SevyXMR/GATA-DVA-BOT-MultipleWallets-Proxies.git
+1.  Clone this repository or download the necessary files to your local machine:
+    ```bash 
+    git clone https://github.com/SevyXMR/GATA-DVA-BOT-MultipleWallets-Proxies.git
 
 2. Navigate to the directory where the files are located:
-
   ```bash
   cd path/to/directory
 
 3. Install the required dependencies:
-
   ```bash
   npm install
 
@@ -46,7 +44,6 @@ To run the bot, execute the following steps in your terminal:
 1. Navigate to the directory where your project is located.
 
 2. Start the bot by running:
-
   ```bash
   node index.js
 
