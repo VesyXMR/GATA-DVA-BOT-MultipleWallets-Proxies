@@ -56,7 +56,3 @@ This project is distributed under the MIT license. See the `LICENSE` file for mo
 ## Contributions
 Contributions are welcome! To contribute, please fork the repository, make your changes, and submit a pull request.
 
----
-
-This README provides comprehensive information needed for other developers to get started using and contributing to your project. Adjust the instructions according to the specific configurations and dependencies of your environment or project.
-
