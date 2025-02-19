@@ -25,7 +25,6 @@ The Gata Auto Bot is an automated script designed to interact with the Gata.xyz 
 
 1. Clone this repository or download the necessary files to your local machine:
 
-  ```bash 
   git clone https://github.com/SevyXMR/GATA-DVA-BOT-MultipleWallets-Proxies.git
 
 2. Navigate to the directory where the files are located:
