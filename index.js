@@ -3,8 +3,8 @@ const { chromium } = require('playwright');
 const path = require('path');
 
 const BASE_URL = 'https://app.gata.xyz/dataAgent';
-const ACTIVITY_INTERVAL = 120000;
-const ACTIVE_SESSION_DURATION = 8 * 60 * 60 * 1000;
+const ACTIVITY_INTERVAL = 120000; // 2 minutos
+const RESTART_INTERVAL = 60 * 60 * 1000; // 1 hora
 const PAGE_TIMEOUT = 120000;
 const SCREENSHOT_PATH = 'screenshot_debug.png';
 
@@ -27,7 +27,6 @@ async function setRequiredLocalStorage(page, account) {
 
 async function findAndClickStartButton(page) {
     console.log('[🔎] Procurando botão "Start"...');
-
     try {
         await page.waitForTimeout(8000);
         await page.screenshot({ path: SCREENSHOT_PATH });
@@ -42,10 +41,8 @@ async function findAndClickStartButton(page) {
                        style.opacity !== '0' &&
                        elem.offsetParent !== null;
             };
-
             const relevantTexts = ['start', 'begin', 'launch', 'dva', 'verify'];
             const elements = Array.from(document.querySelectorAll('button, div[role="button"], a[role="button"], div[class*="button"]'));
-
             for (const element of elements) {
                 const text = element.innerText.toLowerCase().trim();
                 if (isVisible(element) && relevantTexts.some(t => text.includes(t))) {
@@ -55,18 +52,15 @@ async function findAndClickStartButton(page) {
             }
             return false;
         });
-
         if (buttonFound) {
             console.log('[✔️] Botão "Start" encontrado e clicado!');
             return true;
         } else {
             console.log('[⚠️] Botão "Start" não encontrado! Verifique o screenshot.');
-            await saveDebugInfo(page, 'start-button-missing');
             return false;
         }
     } catch (error) {
         console.error('[❌] Erro ao procurar botão:', error);
-        await saveDebugInfo(page, 'start-button-error');
         return false;
     }
 }
@@ -74,7 +68,6 @@ async function findAndClickStartButton(page) {
 async function ensureCorrectPage(page) {
     console.log('[🔄] Verificando URL atual...');
     let currentUrl = page.url();
-
     if (!currentUrl.includes('/dataAgent')) {
         console.log(`[⚠️] Página incorreta detectada (${currentUrl}). Redirecionando para ${BASE_URL}...`);
         await page.goto(BASE_URL, { timeout: PAGE_TIMEOUT });
@@ -96,82 +89,49 @@ async function simulateActivity(page) {
     }
 }
 
-async function keepSessionActive(page) {
-    console.log(`[✔️] Bot ativo. Mantendo sessão ativa...`);
-    const startTime = Date.now();
-
-    const activityInterval = setInterval(async () => {
-        if (Date.now() - startTime > ACTIVE_SESSION_DURATION) {
-            clearInterval(activityInterval);
-            console.log('[🛑] Sessão encerrada (8h atingidas).');
-            return;
-        }
-        await simulateActivity(page);
-    }, ACTIVITY_INTERVAL);
-
-    return activityInterval;
-}
-
-async function saveDebugInfo(page, description) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const screenshotPath = `debug-${description}-${timestamp}.png`;
-    const htmlPath = `debug-${description}-${timestamp}.html`;
-
-    await page.screenshot({ path: screenshotPath });
-    fs.writeFileSync(htmlPath, await page.content());
-
-    console.log(`[📸] Debug salvo: ${screenshotPath}`);
-    console.log(`[📄] HTML salvo: ${htmlPath}`);
+async function restartBot(account, proxy) {
+    console.log('[🔄] Reiniciando bot após 1 hora...');
+    await runBot(account, proxy);
 }
 
 async function runBot(account, proxy) {
     console.log(`[🚀] Iniciando bot para ${account.address} usando proxy: ${proxy || 'Nenhum'}`);
-
     const browser = await chromium.launch({
         headless: true,
         args: proxy ? [`--proxy-server=${proxy}`, '--no-sandbox', '--disable-setuid-sandbox'] : ['--no-sandbox']
     });
-
     const context = await browser.newContext({
         viewport: { width: 1280, height: 800 },
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     });
-
     const page = await context.newPage();
-
     try {
         console.log(`[🔄] Acessando ${BASE_URL}...`);
         await page.goto(BASE_URL, { timeout: PAGE_TIMEOUT });
         await page.waitForTimeout(5000);
-
         await ensureCorrectPage(page);
         await setRequiredLocalStorage(page, account);
         await page.reload({ waitUntil: 'load' });
-
         await ensureCorrectPage(page);
         await page.waitForTimeout(5000);
-
         const buttonClicked = await findAndClickStartButton(page);
-
         if (buttonClicked) {
             console.log(`[✔️] Botão Start clicado. Mantendo sessão ativa...`);
-            await keepSessionActive(page);
+            setInterval(async () => {
+                await restartBot(account, proxy);
+            }, RESTART_INTERVAL);
+            while (true) {
+                await simulateActivity(page);
+                await page.waitForTimeout(ACTIVITY_INTERVAL);
+            }
         } else {
             console.error(`[❌] Falha ao iniciar ${account.address}.`);
-            await saveDebugInfo(page, `bot-failure-${account.address}`);
             await browser.close();
         }
     } catch (error) {
         console.error(`[❌] Erro geral:`, error);
-        await saveDebugInfo(page, `bot-error-${account.address}`);
         await browser.close();
     }
-
-    process.on('SIGINT', async () => {
-        console.log('[🛑] Encerrando bot...');
-        await browser.close();
-        process.exit(0);
-    });
 }
 
 async function main() {
@@ -179,15 +139,11 @@ async function main() {
     process.stdin.once('data', async (input) => {
         const useProxies = input.toString().trim().toLowerCase() === 'sim';
         console.log(`[⚡] Modo de execução: ${useProxies ? 'Com Proxies' : 'Sem Proxies'}`);
-
-        const botInstances = [];
         for (let i = 0; i < accounts.length; i++) {
             const account = accounts[i];
             const proxy = useProxies ? proxies[i] || null : null;
-            botInstances.push(runBot(account, proxy));
+            runBot(account, proxy);
         }
-
-        await Promise.all(botInstances);
     });
 }
 
